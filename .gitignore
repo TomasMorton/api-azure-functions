@@ -449,3 +449,6 @@ $RECYCLE.BIN/
 
 # SpecFlow auto-generated files
 *.feature.cs
+
+# Azure Functions
+local.settings.json
