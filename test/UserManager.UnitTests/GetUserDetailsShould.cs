@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -23,6 +24,16 @@ namespace UserManager.UnitTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
+        [Fact]
+        public void ReturnAWelcomeMessage()
+        {
+            var request = CreateRequest();
+            var response = GetUserDetails.Run(request, _context.Object);
+
+            var responseText = ReadBody(response);
+            Assert.Contains("Welcome", responseText);
+        }
+
         private HttpRequestData CreateRequest()
         {
             var response = new MockHttpResponseData(_context.Object);
@@ -34,6 +45,13 @@ namespace UserManager.UnitTests
             var request = new Mock<HttpRequestData>(MockBehavior.Strict, _context.Object);
             request.Setup(x => x.CreateResponse()).Returns(response);
             return request.Object;
+        }
+
+        private string ReadBody(HttpResponseData response)
+        {
+            response.Body.Position = 0;
+            using var reader = new StreamReader(response.Body);
+            return reader.ReadToEnd();
         }
     }
 }
