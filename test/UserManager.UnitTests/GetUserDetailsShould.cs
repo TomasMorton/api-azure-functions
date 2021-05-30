@@ -1,9 +1,11 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Moq;
+using UserManager.Application;
 using Xunit;
 
 namespace UserManager.UnitTests
@@ -11,61 +13,90 @@ namespace UserManager.UnitTests
     public class GetUserDetailsShould
     {
         private readonly Mock<FunctionContext> _context;
+        private readonly Mock<IUserRepository> _userRepo;
 
         public GetUserDetailsShould()
         {
+            _userRepo = new Mock<IUserRepository>(MockBehavior.Strict);
             _context = new Mock<FunctionContext>(MockBehavior.Strict);
         }
 
         [Fact]
-        public void ReturnAnOkResponseAsync()
+        public async Task ReturnAnOkResponseAsync()
         {
             var request = CreateRequest("id=test");
-            var response = GetUserDetails.Run(request, _context.Object);
+            AllowRetrievingUserDetails();
+
+            var response = await RunFunction(request);
+
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
-        public void ReturnAWelcomeMessage()
+        public async Task ReturnAWelcomeMessage()
         {
             var request = CreateRequest("id=test");
-            
-            var response = GetUserDetails.Run(request, _context.Object);
+            AllowRetrievingUserDetails();
+
+            var response = await RunFunction(request);
 
             var responseText = ReadBody(response);
             Assert.Contains("Welcome", responseText);
         }
 
         [Fact]
-        public void ReturnTheUserId()
+        public async Task ReturnTheUserId()
         {
             const string userId = "test-user-id";
             var request = CreateRequest($"id={userId}");
-            
-            var response = GetUserDetails.Run(request, _context.Object);
-            
+            AllowRetrievingUserDetails();
+
+            var response = await RunFunction(request);
+
             var responseText = ReadBody(response);
             Assert.Contains(userId, responseText);
         }
 
         [Fact]
-        public void ReturnBadRequestWhenTheIdIsEmpty()
+        public void QueryForTheUserDetails()
+        {
+            const string userId = "test-user-id";
+            var request = CreateRequest($"id={userId}");
+            AllowRetrievingUserDetails();
+
+            RunFunction(request);
+
+            _userRepo.Verify(x => x.GetById(userId), Times.Once);
+        }
+
+        [Fact]
+        public async Task ReturnBadRequestWhenTheIdIsEmpty()
         {
             var request = CreateRequest($"id=");
-            
-            var response = GetUserDetails.Run(request, _context.Object);
-            
+
+            var response = await RunFunction(request);
+
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
         [Fact]
-        public void ReturnBadRequestWhenTheIdParamIsNotProvided()
+        public async Task ReturnBadRequestWhenTheIdParamIsNotProvided()
         {
             var request = CreateRequest(string.Empty);
-            
-            var response = GetUserDetails.Run(request, _context.Object);
-            
+
+            var response = await RunFunction(request);
+
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        private Task<HttpResponseData> RunFunction(HttpRequestData request)
+        {
+            return GetUserDetails.Run(request, _userRepo.Object, _context.Object);
+        }
+
+        private void AllowRetrievingUserDetails()
+        {
+            _userRepo.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync("bob");
         }
 
         private HttpRequestData CreateRequest(string queryString)

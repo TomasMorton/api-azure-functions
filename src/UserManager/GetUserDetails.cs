@@ -1,19 +1,24 @@
 using System;
 using System.Net;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using UserManager.Application;
 
 namespace UserManager
 {
     public static class GetUserDetails
     {
         [Function("GetUserDetails")]
-        public static HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
+        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")]
+            HttpRequestData req,
+            IUserRepository userRepoObject,
             FunctionContext executionContext)
         {
             try
             {
                 var userId = GetUserId(req);
+                var username = await userRepoObject.GetById(userId); //TODO: return username
                 var response = CreateResponse(req, userId);
 
                 return response;
