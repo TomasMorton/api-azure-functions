@@ -22,5 +22,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\UserManager.Application\UserManager.Application.csproj" />
+    <ProjectReference Include="..\UserManager.Data.InMemory\UserManager.Data.InMemory.csproj" />
   </ItemGroup>
 </Project>
