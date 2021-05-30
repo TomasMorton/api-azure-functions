@@ -26,8 +26,8 @@ namespace UserManager
             try
             {
                 var userId = GetUserId(req);
-                var username = await _userRepository.GetById(userId);
-                var response = CreateResponse(req, username);
+                var userDetails = await _userRepository.GetById(userId);
+                var response = CreateResponse(req, userDetails);
 
                 return response;
             }
@@ -47,12 +47,12 @@ namespace UserManager
             return id;
         }
 
-        private static HttpResponseData CreateResponse(HttpRequestData req, string userId)
+        private static HttpResponseData CreateResponse(HttpRequestData req, UserDetails userDetails)
         {
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
 
-            response.WriteString($"Welcome, {userId}, to Azure Functions!");
+            response.WriteString($"Welcome, {userDetails.UserName}, to Azure Functions!");
             return response;
         }
     }

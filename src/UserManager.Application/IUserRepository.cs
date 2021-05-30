@@ -4,6 +4,6 @@ namespace UserManager.Application
 {
     public interface IUserRepository
     {
-        Task<string> GetById(string userId);
+        Task<UserDetails> GetById(string userId);
     }
 }
