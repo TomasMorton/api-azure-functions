@@ -13,11 +13,11 @@ namespace UserManager.UnitTests
     public class GetUserDetailsShould
     {
         private readonly Mock<FunctionContext> _context;
-        private readonly Mock<IUserRepository> _userRepo;
+        private readonly Mock<IUserRepository> _userRepository;
 
         public GetUserDetailsShould()
         {
-            _userRepo = new Mock<IUserRepository>(MockBehavior.Strict);
+            _userRepository = new Mock<IUserRepository>(MockBehavior.Strict);
             _context = new Mock<FunctionContext>(MockBehavior.Strict);
         }
 
@@ -45,16 +45,16 @@ namespace UserManager.UnitTests
         }
 
         [Fact]
-        public async Task ReturnTheUserId()
+        public async Task ReturnTheUsername()
         {
-            const string userId = "test-user-id";
-            var request = CreateRequest($"id={userId}");
-            AllowRetrievingUserDetails();
+            const string username = "Bob the builder";
+            _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync(username);
+            var request = CreateRequest("id=test");
 
             var response = await RunFunction(request);
-
+            
             var responseText = ReadBody(response);
-            Assert.Contains(userId, responseText);
+            Assert.Contains(username, responseText);
         }
 
         [Fact]
@@ -66,7 +66,7 @@ namespace UserManager.UnitTests
 
             RunFunction(request);
 
-            _userRepo.Verify(x => x.GetById(userId), Times.Once);
+            _userRepository.Verify(x => x.GetById(userId), Times.Once);
         }
 
         [Fact]
@@ -91,12 +91,12 @@ namespace UserManager.UnitTests
 
         private Task<HttpResponseData> RunFunction(HttpRequestData request)
         {
-            return new GetUserDetails(_userRepo.Object).Run(request, _context.Object);
+            return new GetUserDetails(_userRepository.Object).Run(request, _context.Object);
         }
 
         private void AllowRetrievingUserDetails()
         {
-            _userRepo.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync("bob");
+            _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync("bob");
         }
 
         private HttpRequestData CreateRequest(string queryString)

@@ -18,15 +18,16 @@ namespace UserManager
         }
 
         [Function("GetUserDetails")]
-        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")]
+        public async Task<HttpResponseData> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post")]
             HttpRequestData req,
             FunctionContext executionContext)
         {
             try
             {
                 var userId = GetUserId(req);
-                var username = await _userRepository.GetById(userId); //TODO: return username
-                var response = CreateResponse(req, userId);
+                var username = await _userRepository.GetById(userId);
+                var response = CreateResponse(req, username);
 
                 return response;
             }
