@@ -1,4 +1,4 @@
 namespace UserManager.Application
 {
-    public record UserDetails (string UserName);
+    public record UserDetails (string Id, string UserName);
 }

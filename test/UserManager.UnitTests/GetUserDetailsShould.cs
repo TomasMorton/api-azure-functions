@@ -47,7 +47,7 @@ namespace UserManager.UnitTests
         [Fact]
         public async Task ReturnTheUsername()
         {
-            UserDetails user = new("Bob the builder");
+            UserDetails user = new("id", "Bob the builder");
             _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync(user);
             var request = CreateRequest("id=test");
 
@@ -96,7 +96,7 @@ namespace UserManager.UnitTests
 
         private void AllowRetrievingUserDetails()
         {
-            var userDetails = new UserDetails("bob");
+            var userDetails = new UserDetails("id", "bob");
             _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync(userDetails);
         }
 

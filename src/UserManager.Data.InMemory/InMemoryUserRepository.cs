@@ -7,7 +7,7 @@ namespace UserManager.Data.InMemory
     {
         public Task<UserDetails> GetById(string userId)
         {
-            return Task.FromResult(new UserDetails($"FakeUser_{userId}"));
+            return Task.FromResult(new UserDetails(userId, $"FakeUser_{userId}"));
         }
     }
 }
