@@ -1,24 +1,31 @@
 using System;
 using System.Net;
 using System.Threading.Tasks;
+using System.Web;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using UserManager.Application;
 
 namespace UserManager
 {
-    public static class GetUserDetails
+    public class GetUserDetails
     {
+        private readonly IUserRepository _userRepository;
+
+        public GetUserDetails(IUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+        }
+
         [Function("GetUserDetails")]
-        public static async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")]
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")]
             HttpRequestData req,
-            IUserRepository userRepoObject,
             FunctionContext executionContext)
         {
             try
             {
                 var userId = GetUserId(req);
-                var username = await userRepoObject.GetById(userId); //TODO: return username
+                var username = await _userRepository.GetById(userId); //TODO: return username
                 var response = CreateResponse(req, userId);
 
                 return response;
@@ -31,7 +38,7 @@ namespace UserManager
 
         private static string GetUserId(HttpRequestData req)
         {
-            var queryParams = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
+            var queryParams = HttpUtility.ParseQueryString(req.Url.Query);
             var id = queryParams["id"];
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("id parameter not provided in query string", "id");

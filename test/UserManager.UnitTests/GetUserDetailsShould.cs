@@ -91,7 +91,7 @@ namespace UserManager.UnitTests
 
         private Task<HttpResponseData> RunFunction(HttpRequestData request)
         {
-            return GetUserDetails.Run(request, _userRepo.Object, _context.Object);
+            return new GetUserDetails(_userRepo.Object).Run(request, _context.Object);
         }
 
         private void AllowRetrievingUserDetails()
