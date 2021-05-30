@@ -48,6 +48,26 @@ namespace UserManager.UnitTests
             Assert.Contains(userId, responseText);
         }
 
+        [Fact]
+        public void ReturnBadRequestWhenTheIdIsEmpty()
+        {
+            var request = CreateRequest($"id=");
+            
+            var response = GetUserDetails.Run(request, _context.Object);
+            
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public void ReturnBadRequestWhenTheIdParamIsNotProvided()
+        {
+            var request = CreateRequest(string.Empty);
+            
+            var response = GetUserDetails.Run(request, _context.Object);
+            
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
         private HttpRequestData CreateRequest(string queryString)
         {
             var response = new MockHttpResponseData(_context.Object);

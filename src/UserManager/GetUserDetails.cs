@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Logging;
 
 namespace UserManager
 {
@@ -13,16 +11,27 @@ namespace UserManager
         public static HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
             FunctionContext executionContext)
         {
-            var userId = GetUserId(req);
-            var response = CreateResponse(req, userId);
+            try
+            {
+                var userId = GetUserId(req);
+                var response = CreateResponse(req, userId);
 
-            return response;
+                return response;
+            }
+            catch (ArgumentException)
+            {
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+            }
         }
 
         private static string GetUserId(HttpRequestData req)
         {
             var queryParams = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
-            return queryParams["id"] ?? throw new Exception("id parameter not provided");
+            var id = queryParams["id"];
+            if (string.IsNullOrWhiteSpace(id))
+                throw new ArgumentException("id parameter not provided in query string", "id");
+
+            return id;
         }
 
         private static HttpResponseData CreateResponse(HttpRequestData req, string userId)
