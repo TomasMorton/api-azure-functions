@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net;
 using Microsoft.Azure.Functions.Worker;
@@ -19,7 +20,7 @@ namespace UserManager.UnitTests
         [Fact]
         public void ReturnAnOkResponseAsync()
         {
-            var request = CreateRequest();
+            var request = CreateRequest("id=test");
             var response = GetUserDetails.Run(request, _context.Object);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
@@ -27,22 +28,37 @@ namespace UserManager.UnitTests
         [Fact]
         public void ReturnAWelcomeMessage()
         {
-            var request = CreateRequest();
+            var request = CreateRequest("id=test");
+            
             var response = GetUserDetails.Run(request, _context.Object);
 
             var responseText = ReadBody(response);
             Assert.Contains("Welcome", responseText);
         }
 
-        private HttpRequestData CreateRequest()
+        [Fact]
+        public void ReturnTheUserId()
         {
-            var response = new MockHttpResponseData(_context.Object);
-            return CreateRequest(response);
+            const string userId = "test-user-id";
+            var request = CreateRequest($"id={userId}");
+            
+            var response = GetUserDetails.Run(request, _context.Object);
+            
+            var responseText = ReadBody(response);
+            Assert.Contains(userId, responseText);
         }
 
-        private HttpRequestData CreateRequest(HttpResponseData response)
+        private HttpRequestData CreateRequest(string queryString)
+        {
+            var response = new MockHttpResponseData(_context.Object);
+            return CreateRequest(queryString, response);
+        }
+
+        private HttpRequestData CreateRequest(string queryString, HttpResponseData response)
         {
             var request = new Mock<HttpRequestData>(MockBehavior.Strict, _context.Object);
+            var uri = new Uri($"http://test.function.com/GetUserDetails?{queryString}");
+            request.Setup(x => x.Url).Returns(uri);
             request.Setup(x => x.CreateResponse()).Returns(response);
             return request.Object;
         }
