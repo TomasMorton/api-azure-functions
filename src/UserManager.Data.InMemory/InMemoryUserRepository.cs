@@ -5,9 +5,9 @@ namespace UserManager.Data.InMemory
 {
     public class InMemoryUserRepository : IUserRepository
     {
-        public Task<string> GetById(string userId)
+        public Task<UserDetails> GetById(string userId)
         {
-            return Task.FromResult($"FakeUser_{userId}");
+            return Task.FromResult(new UserDetails($"FakeUser_{userId}"));
         }
     }
 }

@@ -6,14 +6,14 @@ namespace UserManager.Data.InMemory.UnitTests
     public class InMemoryUserRepositoryShould
     {
         [Fact]
-        public async Task ReturnFakeDataContainingTheId()
+        public async Task ReturnAFakeUsernameContainingTheId()
         {
             const string userId = "test123";
             var repository = new InMemoryUserRepository();
 
             var userDetails = await repository.GetById(userId);
             
-            Assert.Equal($"FakeUser_{userId}", userDetails);
+            Assert.Equal($"FakeUser_{userId}", userDetails.UserName);
         }
     }
 }

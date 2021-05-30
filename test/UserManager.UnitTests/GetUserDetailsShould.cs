@@ -47,14 +47,14 @@ namespace UserManager.UnitTests
         [Fact]
         public async Task ReturnTheUsername()
         {
-            const string username = "Bob the builder";
-            _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync(username);
+            UserDetails user = new("Bob the builder");
+            _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync(user);
             var request = CreateRequest("id=test");
 
             var response = await RunFunction(request);
-            
+
             var responseText = ReadBody(response);
-            Assert.Contains(username, responseText);
+            Assert.Contains(user.UserName, responseText);
         }
 
         [Fact]
@@ -96,7 +96,8 @@ namespace UserManager.UnitTests
 
         private void AllowRetrievingUserDetails()
         {
-            _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync("bob");
+            var userDetails = new UserDetails("bob");
+            _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync(userDetails);
         }
 
         private HttpRequestData CreateRequest(string queryString)
