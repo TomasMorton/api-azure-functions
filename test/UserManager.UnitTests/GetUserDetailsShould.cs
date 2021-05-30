@@ -1,8 +1,11 @@
+using System;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Moq;
+using UserManager.Application;
 using Xunit;
 
 namespace UserManager.UnitTests
@@ -10,39 +13,103 @@ namespace UserManager.UnitTests
     public class GetUserDetailsShould
     {
         private readonly Mock<FunctionContext> _context;
+        private readonly Mock<IUserRepository> _userRepository;
 
         public GetUserDetailsShould()
         {
+            _userRepository = new Mock<IUserRepository>(MockBehavior.Strict);
             _context = new Mock<FunctionContext>(MockBehavior.Strict);
         }
 
         [Fact]
-        public void ReturnAnOkResponseAsync()
+        public async Task ReturnAnOkResponseAsync()
         {
-            var request = CreateRequest();
-            var response = GetUserDetails.Run(request, _context.Object);
+            var request = CreateRequest("id=test");
+            AllowRetrievingUserDetails();
+
+            var response = await RunFunction(request);
+
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
-        public void ReturnAWelcomeMessage()
+        public async Task ReturnAWelcomeMessage()
         {
-            var request = CreateRequest();
-            var response = GetUserDetails.Run(request, _context.Object);
+            var request = CreateRequest("id=test");
+            AllowRetrievingUserDetails();
+
+            var response = await RunFunction(request);
 
             var responseText = ReadBody(response);
             Assert.Contains("Welcome", responseText);
         }
 
-        private HttpRequestData CreateRequest()
+        [Fact]
+        public async Task ReturnTheUsername()
         {
-            var response = new MockHttpResponseData(_context.Object);
-            return CreateRequest(response);
+            const string username = "Bob the builder";
+            _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync(username);
+            var request = CreateRequest("id=test");
+
+            var response = await RunFunction(request);
+            
+            var responseText = ReadBody(response);
+            Assert.Contains(username, responseText);
         }
 
-        private HttpRequestData CreateRequest(HttpResponseData response)
+        [Fact]
+        public void QueryForTheUserDetails()
+        {
+            const string userId = "test-user-id";
+            var request = CreateRequest($"id={userId}");
+            AllowRetrievingUserDetails();
+
+            RunFunction(request);
+
+            _userRepository.Verify(x => x.GetById(userId), Times.Once);
+        }
+
+        [Fact]
+        public async Task ReturnBadRequestWhenTheIdIsEmpty()
+        {
+            var request = CreateRequest($"id=");
+
+            var response = await RunFunction(request);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task ReturnBadRequestWhenTheIdParamIsNotProvided()
+        {
+            var request = CreateRequest(string.Empty);
+
+            var response = await RunFunction(request);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        private Task<HttpResponseData> RunFunction(HttpRequestData request)
+        {
+            return new GetUserDetails(_userRepository.Object).Run(request, _context.Object);
+        }
+
+        private void AllowRetrievingUserDetails()
+        {
+            _userRepository.Setup(x => x.GetById(It.IsAny<string>())).ReturnsAsync("bob");
+        }
+
+        private HttpRequestData CreateRequest(string queryString)
+        {
+            var response = new MockHttpResponseData(_context.Object);
+            return CreateRequest(queryString, response);
+        }
+
+        private HttpRequestData CreateRequest(string queryString, HttpResponseData response)
         {
             var request = new Mock<HttpRequestData>(MockBehavior.Strict, _context.Object);
+            var uri = new Uri($"http://test.function.com/GetUserDetails?{queryString}");
+            request.Setup(x => x.Url).Returns(uri);
             request.Setup(x => x.CreateResponse()).Returns(response);
             return request.Object;
         }

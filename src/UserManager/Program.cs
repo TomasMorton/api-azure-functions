@@ -1,7 +1,7 @@
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Azure.Functions.Worker.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using UserManager.Application;
+using UserManager.Data.InMemory;
 
 namespace UserManager
 {
@@ -11,9 +11,15 @@ namespace UserManager
         {
             var host = new HostBuilder()
                 .ConfigureFunctionsWorkerDefaults()
+                .ConfigureServices(ConfigureServices)
                 .Build();
 
             host.Run();
+        }
+
+        private static void ConfigureServices(HostBuilderContext hostBuilderContext, IServiceCollection services)
+        {
+            services.AddSingleton<IUserRepository, InMemoryUserRepository>();
         }
     }
 }
